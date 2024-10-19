@@ -1,4 +1,4 @@
-const canvas = document.getElementById('blackboard');
+const canvas = document.getElementById('whiteboard');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth * 0.9;
 canvas.height = window.innerHeight * 0.7;
@@ -27,6 +27,15 @@ selectButton.addEventListener('click', () => {
 	selectButton.classList.add('active');
 });
 
+// Prevent scrolling on touch devices
+document.body.addEventListener(
+	'touchmove',
+	function (e) {
+		e.preventDefault();
+	},
+	{ passive: false }
+);
+
 // Touch events for drawing
 canvas.addEventListener('touchstart', handleStart);
 canvas.addEventListener('touchmove', handleMove);
@@ -47,7 +56,6 @@ function handleStart(event) {
 	if (isDrawing) {
 		startX = x;
 		startY = y;
-		isDrawing = true;
 		ctx.beginPath();
 		ctx.moveTo(x, y);
 	} else if (isSelecting) {
@@ -60,7 +68,6 @@ function handleStart(event) {
 }
 
 function handleMove(event) {
-	if (!isDrawing && !isSelecting) return;
 	const rect = canvas.getBoundingClientRect();
 	const x =
 		(event.touches ? event.touches[0].clientX : event.clientX) - rect.left;
@@ -69,6 +76,8 @@ function handleMove(event) {
 
 	if (isDrawing) {
 		ctx.lineTo(x, y);
+		ctx.strokeStyle = 'black'; // Black lines on whiteboard
+		ctx.lineWidth = 2;
 		ctx.stroke();
 	} else if (isSelecting && selectedShape) {
 		const dx = x - startX;
