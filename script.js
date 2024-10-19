@@ -99,7 +99,6 @@ function handleEnd(event) {
 			endX: event.clientX,
 			endY: event.clientY,
 		});
-		isDrawing = false;
 	}
 	selectedShape = null;
 }
