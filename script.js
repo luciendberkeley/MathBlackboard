@@ -4,7 +4,6 @@ canvas.width = window.innerWidth * 0.9;
 canvas.height = window.innerHeight * 0.7;
 
 let drawingTool = true;
-let drawing = false;
 let selectingTool = false;
 let selecting = false;
 let selectionDone = false;
@@ -12,22 +11,28 @@ let lineHappening = false;
 let movingSelection = false;
 let startX, startY, currentX, currentY;
 let selectedArea = null;
-let shapes = []; // Store shapes drawn
+let pixels = []; // Store shapes drawn
+let selectedPixels = []; // Store pixels that are selected
 
 const drawButton = document.getElementById('draw-tool');
 const selectButton = document.getElementById('select-tool');
 
 // Set up tool selection for both touch and click events
-drawButton.addEventListener('touchstart', activateDrawMode); // Touch event for Apple Pencil
-selectButton.addEventListener('touchstart', activateSelectMode); // Touch event for Apple Pencil
+drawButton.addEventListener('touchstart', activateDrawMode);
+selectButton.addEventListener('touchstart', activateSelectMode);
+drawButton.addEventListener('click', activateDrawMode);
+selectButton.addEventListener('click', activateSelectMode);
 
 function activateDrawMode(event) {
 	drawingTool = true;
 	selectingTool = false;
 	selectionDone = false;
 	movingSelection = false;
+	selectedArea = null; // Clear selection
+	selectedPixels = []; // Clear selected pixels
 	drawButton.classList.add('active');
 	selectButton.classList.remove('active');
+	redrawCanvas(); // Redraw to clear selection on canvas
 }
 
 function activateSelectMode(event) {
@@ -35,14 +40,21 @@ function activateSelectMode(event) {
 	selectingTool = true;
 	selectionDone = false;
 	movingSelection = false;
+	selectedArea = null; // Clear selection
+	selectedPixels = []; // Clear selected pixels
 	drawButton.classList.remove('active');
 	selectButton.classList.add('active');
+	redrawCanvas(); // Redraw to clear selection on canvas
 }
 
-// Touch events for drawing and selecting
+// Touch and mouse events for drawing and selecting
 canvas.addEventListener('touchstart', handleStart);
 canvas.addEventListener('touchmove', handleMove);
 canvas.addEventListener('touchend', handleEnd);
+
+canvas.addEventListener('mousedown', handleStart);
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('mouseup', handleEnd);
 
 function handleStart(event) {
 	const rect = canvas.getBoundingClientRect();
@@ -56,6 +68,7 @@ function handleStart(event) {
 		lineHappening = true;
 		startX = x;
 		startY = y;
+		pixels.push([x, y]);
 		ctx.beginPath();
 		ctx.moveTo(x, y);
 	} else if (selectingTool && !selectionDone && !selecting) {
@@ -65,7 +78,18 @@ function handleStart(event) {
 		startY = y;
 		currentX = x;
 		currentY = y;
-		selectedArea = null;
+	} else if (selectingTool && selectionDone) {
+		// Start moving the selected area
+		if (
+			x >= selectedArea.startX &&
+			x <= selectedArea.endX &&
+			y >= selectedArea.startY &&
+			y <= selectedArea.endY
+		) {
+			movingSelection = true;
+			startX = x;
+			startY = y; // Save current position for moving calculation
+		}
 	}
 }
 
@@ -78,22 +102,31 @@ function handleMove(event) {
 
 	if (drawingTool && lineHappening) {
 		// Continue drawing a line
+		const newPixels = getLinePixels(startX, startY, x, y);
+		newPixels.forEach((pixel) => {
+			if (!pixels.some((p) => p[0] === pixel[0] && p[1] === pixel[1])) {
+				pixels.push(pixel); // Avoid duplicates
+			}
+		});
 		ctx.lineTo(x, y);
 		ctx.strokeStyle = 'black'; // Black lines on whiteboard
 		ctx.lineWidth = 2;
 		ctx.stroke();
+		startX = x; // Update startX and startY for the next segment
+		startY = y;
+		redrawCanvas();
 	} else if (selectingTool && selecting && !selectionDone) {
 		// Update the selection box size
 		currentX = x;
 		currentY = y;
 		redrawCanvas();
 		drawSelectionBox(startX, startY, currentX, currentY);
-	} else if (movingSelection && selectedArea) {
+	} else if (movingSelection) {
 		// Move the selected area
 		const dx = x - startX;
 		const dy = y - startY;
 		startX = x;
-		startY = y;
+		startY = y; // Update for next movement
 		moveSelectedArea(dx, dy);
 		redrawCanvas();
 	}
@@ -109,10 +142,43 @@ function handleEnd(event) {
 		selectionDone = true;
 		selecting = false;
 		selectedArea = { startX, startY, endX: currentX, endY: currentY };
+		// Store selected pixels
+		selectedPixels = pixels.filter(
+			(pixel) =>
+				pixel[0] >= selectedArea.startX &&
+				pixel[0] <= selectedArea.endX &&
+				pixel[1] >= selectedArea.startY &&
+				pixel[1] <= selectedArea.endY
+		);
 	} else if (movingSelection) {
 		// Finish moving the selected area
 		movingSelection = false;
 	}
+}
+
+// Helper function to get pixels between two points
+function getLinePixels(x1, y1, x2, y2) {
+	const pixels = [];
+	const dx = Math.abs(x2 - x1);
+	const dy = Math.abs(y2 - y1);
+	const sx = x1 < x2 ? 1 : -1;
+	const sy = y1 < y2 ? 1 : -1;
+	let err = dx - dy;
+
+	while (true) {
+		pixels.push([x1, y1]);
+		if (x1 === x2 && y1 === y2) break;
+		const err2 = err * 2;
+		if (err2 > -dy) {
+			err -= dy;
+			x1 += sx;
+		}
+		if (err2 < dx) {
+			err += dx;
+			y1 += sy;
+		}
+	}
+	return pixels;
 }
 
 // Helper function to draw the selection box
@@ -126,31 +192,47 @@ function drawSelectionBox(x1, y1, x2, y2) {
 
 // Helper function to move the selected area
 function moveSelectedArea(dx, dy) {
-	// For simplicity, just move all shapes inside the selection box
-	shapes.forEach((shape) => {
-		if (
-			shape.x >= selectedArea.startX &&
-			shape.x <= selectedArea.endX &&
-			shape.y >= selectedArea.startY &&
-			shape.y <= selectedArea.endY
-		) {
-			shape.x += dx;
-			shape.y += dy;
+	// Clear the selected pixels from the original array only for visualization, not for the original data
+	const newPixels = pixels.slice(); // Create a copy of the pixels
+	selectedPixels.forEach((pixel) => {
+		const index = newPixels.findIndex(
+			(p) => p[0] === pixel[0] && p[1] === pixel[1]
+		);
+		if (index !== -1) {
+			newPixels.splice(index, 1); // Remove from newPixels but don't modify the original pixels
 		}
 	});
+
+	// Move the selected pixels
+	selectedPixels.forEach((pixel) => {
+		pixel[0] += dx;
+		pixel[1] += dy;
+	});
+
+	// Combine moved pixels with the new pixel array
+	selectedPixels.forEach((pixel) => {
+		newPixels.push([pixel[0], pixel[1]]);
+	});
+
+	// Update the original pixel array with the newly combined one
+	pixels = newPixels;
+
+	// Update the selected area boundaries
+	selectedArea.startX += dx;
+	selectedArea.endX += dx;
+	selectedArea.startY += dy;
+	selectedArea.endY += dy;
 }
 
 // Redraw the canvas (shapes and selection)
 function redrawCanvas() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	// Redraw shapes
-	shapes.forEach((shape) => {
+	// Redraw pixels
+	pixels.forEach((pixel) => {
 		ctx.beginPath();
-		ctx.moveTo(shape.startX, shape.startY);
-		ctx.lineTo(shape.endX, shape.endY);
-		ctx.strokeStyle = 'black';
-		ctx.lineWidth = 2;
-		ctx.stroke();
+		ctx.rect(pixel[0], pixel[1], 1, 1);
+		ctx.fillStyle = 'black';
+		ctx.fill();
 	});
 	if (selectedArea) {
 		drawSelectionBox(
@@ -163,14 +245,10 @@ function redrawCanvas() {
 }
 
 // Prevent canvas from moving by consuming touch events
-canvas.addEventListener('touchstart', (event) => {
-	event.preventDefault();
-});
-
-canvas.addEventListener('touchmove', (event) => {
-	event.preventDefault();
-});
-
-canvas.addEventListener('touchend', (event) => {
-	event.preventDefault();
-});
+canvas.addEventListener(
+	'touchmove',
+	(event) => {
+		event.preventDefault();
+	},
+	{ passive: false }
+);
