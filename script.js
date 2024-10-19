@@ -15,7 +15,6 @@ drawButton.addEventListener('touchstart', activateDrawMode); // Touch event for 
 drawButton.addEventListener('click', activateDrawMode); // Click event for mouse
 
 function activateDrawMode(event) {
-	event.preventDefault(); // Prevent unintended scrolling/zooming
 	isDrawing = true;
 	drawButton.classList.add('active');
 }
@@ -24,11 +23,6 @@ function activateDrawMode(event) {
 canvas.addEventListener('touchstart', handleStart);
 canvas.addEventListener('touchmove', handleMove);
 canvas.addEventListener('touchend', handleEnd);
-
-// Mouse events for drawing
-canvas.addEventListener('mousedown', handleStart);
-canvas.addEventListener('mousemove', handleMove);
-canvas.addEventListener('mouseup', handleEnd);
 
 function handleStart(event) {
 	const rect = canvas.getBoundingClientRect();
