@@ -1,0 +1,38 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+}
+
+.toolbar {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+#board-container {
+    position: relative;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+#blackboard {
+    background-color: #000;
+    width: 100%;
+    height: 100%;
+    touch-action: none; /* Disable default gestures */
+}
