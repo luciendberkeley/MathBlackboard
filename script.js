@@ -10,12 +10,12 @@ let shapes = [];
 
 const drawButton = document.getElementById('draw-tool');
 
-// Set up tool selection (add touch events for iPad)
+// Set up tool selection for both touch and click events
 drawButton.addEventListener('touchstart', activateDrawMode); // Touch event for Apple Pencil
-
-selectButton.addEventListener('touchstart', activateSelectMode); // Touch event for Apple Pencil
+drawButton.addEventListener('click', activateDrawMode); // Click event for mouse
 
 function activateDrawMode(event) {
+	event.preventDefault(); // Prevent unintended scrolling/zooming
 	isDrawing = true;
 	drawButton.classList.add('active');
 }
@@ -33,6 +33,11 @@ document.body.addEventListener(
 canvas.addEventListener('touchstart', handleStart);
 canvas.addEventListener('touchmove', handleMove);
 canvas.addEventListener('touchend', handleEnd);
+
+// Mouse events for drawing
+canvas.addEventListener('mousedown', handleStart);
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('mouseup', handleEnd);
 
 function handleStart(event) {
 	const rect = canvas.getBoundingClientRect();
@@ -66,9 +71,21 @@ function handleMove(event) {
 }
 
 function handleEnd(event) {
-	if (isDrawing && !lineHappening) {
+	if (isDrawing && lineHappening) {
 		ctx.closePath();
 		lineHappening = false;
-		// Keep drawing mode active after ending the line
 	}
 }
+
+// Prevent canvas from moving by consuming touch events
+canvas.addEventListener('touchstart', (event) => {
+	event.preventDefault();
+});
+
+canvas.addEventListener('touchmove', (event) => {
+	event.preventDefault();
+});
+
+canvas.addEventListener('touchend', (event) => {
+	event.preventDefault();
+});
