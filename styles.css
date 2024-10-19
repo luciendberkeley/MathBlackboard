@@ -4,35 +4,31 @@
     box-sizing: border-box;
 }
 
-body, html {
-    height: 100%;
+body {
     display: flex;
     flex-direction: column;
-    font-family: Arial, sans-serif;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
-.toolbar {
-    background-color: #333;
-    color: white;
-    padding: 10px;
-    display: flex;
-    gap: 10px;
+#toolbar {
+    margin-bottom: 10px;
 }
 
 button {
-    padding: 10px 20px;
+    padding: 10px;
+    margin: 5px;
+    font-size: 16px;
     cursor: pointer;
 }
 
-#board-container {
-    position: relative;
-    flex-grow: 1;
-    overflow: hidden;
+button.active {
+    background-color: #4CAF50;
+    color: white;
 }
 
-#blackboard {
-    background-color: #000;
-    width: 100%;
-    height: 100%;
-    touch-action: none; /* Disable default gestures */
+canvas {
+    border: 2px solid black;
+    touch-action: none;
 }
