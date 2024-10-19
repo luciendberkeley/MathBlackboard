@@ -12,20 +12,28 @@ let shapes = [];
 const drawButton = document.getElementById('draw-tool');
 const selectButton = document.getElementById('select-tool');
 
-// Set up tool selection
-drawButton.addEventListener('click', () => {
+// Set up tool selection (add touch events for iPad)
+drawButton.addEventListener('click', activateDrawMode);
+drawButton.addEventListener('touchstart', activateDrawMode); // Touch event for Apple Pencil
+
+selectButton.addEventListener('click', activateSelectMode);
+selectButton.addEventListener('touchstart', activateSelectMode); // Touch event for Apple Pencil
+
+function activateDrawMode(event) {
+	event.preventDefault(); // Prevent accidental scrolling/zooming
 	isDrawing = true;
 	isSelecting = false;
 	drawButton.classList.add('active');
 	selectButton.classList.remove('active');
-});
+}
 
-selectButton.addEventListener('click', () => {
+function activateSelectMode(event) {
+	event.preventDefault(); // Prevent accidental scrolling/zooming
 	isDrawing = false;
 	isSelecting = true;
 	drawButton.classList.remove('active');
 	selectButton.classList.add('active');
-});
+}
 
 // Prevent scrolling on touch devices
 document.body.addEventListener(
@@ -92,6 +100,7 @@ function handleMove(event) {
 
 function handleEnd(event) {
 	if (isDrawing) {
+		// Keep drawing mode active after ending the line
 		shapes.push({
 			type: 'line',
 			startX,
