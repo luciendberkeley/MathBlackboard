@@ -20,15 +20,6 @@ function activateDrawMode(event) {
 	drawButton.classList.add('active');
 }
 
-// Prevent scrolling on touch devices
-document.body.addEventListener(
-	'touchmove',
-	function (e) {
-		e.preventDefault();
-	},
-	{ passive: false }
-);
-
 // Touch events for drawing
 canvas.addEventListener('touchstart', handleStart);
 canvas.addEventListener('touchmove', handleMove);
