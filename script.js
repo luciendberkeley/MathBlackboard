@@ -19,12 +19,19 @@ const selectButton = document.getElementById('select-tool');
 const clearButton = document.getElementById('clear');
 
 // Set up tool selection for both touch and click events
-drawButton.addEventListener('touchstart', activateDrawMode);
-selectButton.addEventListener('touchstart', activateSelectMode);
-clearButton.addEventListener('touchstart', clearSelection);
-drawButton.addEventListener('click', activateDrawMode);
-selectButton.addEventListener('click', activateSelectMode);
-clearButton.addEventListener('click', clearSelection);
+const buttonEvents = [
+	{ element: drawButton, handler: activateDrawMode },
+	{ element: selectButton, handler: activateSelectMode },
+	{ element: clearButton, handler: clearSelection },
+];
+
+buttonEvents.forEach(({ element, handler }) => {
+	element.addEventListener('touchstart', (event) => {
+		event.preventDefault(); // Prevent default to avoid double firing on touch
+		handler(event);
+	});
+	element.addEventListener('click', handler);
+});
 
 function activateDrawMode(event) {
 	drawingTool = true;
@@ -246,7 +253,6 @@ function redrawCanvas() {
 		);
 	}
 }
-
 function clearSelection() {
 	if (selectedArea) {
 		// Remove pixels within the selected area
