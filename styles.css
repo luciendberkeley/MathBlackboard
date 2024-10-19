@@ -1,3 +1,4 @@
+/* Prevent page scrolling */
 * {
 	margin: 0;
 	padding: 0;
@@ -15,10 +16,6 @@ body {
 	overflow: hidden;
 }
 
-#toolbar {
-	margin-bottom: 10px;
-}
-
 button {
 	padding: 10px;
 	margin: 5px;
@@ -34,5 +31,5 @@ button.active {
 canvas {
 	border: 2px solid black;
 	background-color: white;
-	touch-action: none; /* Prevent scrolling */
+	touch-action: none; /* Prevent touch interactions from scrolling the page */
 }
